@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get:\syncCaseSFGed\(baseId)\(id):p-gr-sync-case-config" doc:id="e11e14e4-2160-4d2f-9075-9f1531e56e4c" >
+		<ee:transform doc:name="Set Log Configuration" doc:id="84b8813d-dfe8-4abe-9dd1-332dcbd7a01e" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/java
+---
+'Process cases from Salesforce to Docubase - Start']]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="0ae610f8-6d5a-4b1b-81c6-32ed8867ad3d" name="mule-common-logger-subflow" />
+		<ee:transform doc:name="Variables" doc:id="8728e42c-dd75-4aa7-914c-f470575bdae7" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="personalInfoQuery" ><![CDATA['${config.salesforce.queryDemandeInfo}' ++ "'" ++ attributes.uriParams.id default "" ++ "'"]]></ee:set-variable>
+				<ee:set-variable variableName="baseId" ><![CDATA[attributes.uriParams.baseId]]></ee:set-variable>
+				<ee:set-variable variableName="x-db-connectas" ><![CDATA[%dw 2.0
+output application/json
+---
+attributes.headers.'x-db-connectas' as String]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request to SF" doc:id="915ab16b-5958-4b7b-a369-8ad62c85ccdf" config-ref="http-request-s-gr-sfdc" path="#['${config.salesforce.endpoint.getRecord}']" responseTimeout="999999999" >
+			<http:headers ><![CDATA[#[output application/json
+---
+{
+	client_secret : attributes.headers.client_secret,
+	client_id : attributes.headers.client_id
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+queryString : vars.personalInfoQuery
+}]]]></http:query-params>
+		</http:request>
+		<set-variable value='#[payload[0].IDPLI__c]' doc:name="ID PLI" doc:id="21bb4921-c616-453e-b937-210b07be1d75" variableName="idPli"/>
+		<ee:transform doc:name="SF to Docubase" doc:id="5abd2569-7f00-4b7f-8ec5-101fc801478d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+"criterionList": [
+	({
+	"categoryId": 3,
+	"word": payload[0].Account.NAdherent__c
+	}) if(!isEmpty(payload[0].Account.NAdherent__c)),
+	({
+	"categoryId": 13,
+	"word": payload[0].Contrat__r.NContrat__c
+	}) if(!isEmpty(payload[0].Contrat__r.NContrat__c)),
+	({
+	"categoryId": 35,
+	"word": payload[0].DomainedActivite__c
+	}) if(!isEmpty(payload[0].DomainedActivite__c)),
+	({
+	"categoryId": 25,
+	"word": payload[0].MontantEncaissement__c
+	}) if(!isEmpty(payload[0].MontantEncaissement__c)),
+	({
+	"categoryId": 17,
+	"word": payload[0].Reason
+	}) if(!isEmpty(payload[0].Reason)),
+	({
+	"categoryId": 41,
+	"word": payload[0].Status
+	}) if(!isEmpty(payload[0].Status))
+	]
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Payload" doc:id="1c192cbb-c1b8-4ccc-9260-41a82b85c663" variableName="payloadVar"/>
+		<http:request method="GET" doc:name="Search Document - GED" doc:id="ee375cd4-d820-4280-ab9f-91caa680b998" config-ref="http-request-s-gr-docubase" path="#['/searchDocument/0/' ++ vars.idPli]" responseTimeout="${http.timeout}">
+			<http:headers ><![CDATA[#[output application/json
+---
+{
+	client_secret : attributes.headers.client_secret,
+	client_id : attributes.headers.client_id
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="GedIds" doc:id="03e05097-5940-48bb-b435-34110c78e707" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.solutionExtendedList.documentExtended.documentInformation.gedId]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="89d743ab-4d46-462c-8634-75247e641b8c" >
+			<http:request method="PATCH" doc:name="Sync Case SF Ged" doc:id="a624bc37-5c3b-4277-86b8-f0763f6a1f37" config-ref="http-request-s-gr-docubase" path="#['/base/' ++ vars.baseId ++ '/case/' ++ payload]" responseTimeout="${http.timeout}">
+			<http:body ><![CDATA[#[vars.payloadVar]]]></http:body>
+				<http:headers><![CDATA[#[output application/json
+---
+{
+	client_secret : attributes.headers.client_secret,
+	client_id : attributes.headers.client_id,
+	'X-db-connectAs' : vars."x-db-connectas"
+}]]]></http:headers>
+		</http:request>
+		</foreach>
+		<ee:transform doc:name="Set Log Configuration" doc:id="28c042e3-f03c-45f9-8cfb-9481aa16448e" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/java
+---
+'Process cases from Salesforce to Docubase - Finish']]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="3137ba18-c40a-4bb5-85ba-b7b9fa3c095b" name="mule-common-logger-subflow" />
+	</flow>
+</mule>

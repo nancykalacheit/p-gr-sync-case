@@ -1,0 +1,64 @@
+# Environment specific properties
+environment:
+ name: "dev"
+  
+api:
+  name: "${application.name}-${environment.name}"
+  id: "329996"
+  version: "v1"
+
+http:
+  port: "8085"
+  timeout: "99999999"
+  listener:
+    path: "/api/${api.name}/${api.version}/*"
+
+https:
+  listener:
+    path: "/api/${api.name}/${api.version}/*"
+    
+
+config:
+  docubase:
+    protocol: "HTTP"
+    host: "localhost"
+    port: "8084"
+    path:
+      baseURI: "api/s-gr-docubase-dev/v1"
+    endpoint: 
+      getDocument: "/searchDocument"
+      getTag: "/tag"
+      getTree: "/getTree"
+      readFile: "/file"
+
+  salesforce:
+     protocol: "HTTP"
+     authorizationURL: "https://test.salesforce.com/services/Soap/u/50.0"
+     host: "localhost"
+     port: "8083"
+     username: "mulesoft.api@garance.fr.lot1real"
+     password: "garance@123"
+     securityToken: "tKO7vwAyJhyB2QRzU4VOmaQKy"
+     basepath: "api/s-gr-sfdc-dev/v1/upsertRecords"
+     path:
+       baseURI: "api/s-gr-sfdc-dev/v1"
+     endpoint:
+       upsertRecords: "/upsertRecords"
+       getRecord: "/getRecord"
+     objectCase: "Case"
+     uniqueFieldCase: "IDGED__c"
+     objectTask: "Task"
+     uniqueFieldTask: "IdGed__c"
+     queryDemandeInfo: "Select Id, Account.NAdherent__c, Contrat__r.NContrat__c, DomainedActivite__c , Origin, IDPLI__c, TypologieDeDocument__c, ReferenceEncaissement__c, MontantEncaissement__c, Reason, SousMotif__c, Status From Case where id ="
+     
+# Common properties
+common:
+  audit:
+    role:
+      logStart: "true"
+      logEnd: "true"
+      logInfo: "true"
+      logWarning: "true"
+      logError: "true"
+      logDebug: "true"
+    defaultLogPayloadLogic: "ALWAYS"

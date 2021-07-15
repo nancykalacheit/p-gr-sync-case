@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<flow name="get:\getTree:p-gr-sync-case-config" doc:id="67a71f29-6842-4853-a1c2-5e6f7ca2e3aa" >
+		<ee:transform doc:name="Set Log Configuration" doc:id="f4ced269-29d4-4d94-8088-e2242c9e5744" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/java
+---
+"Process Docubase Request - Plan de Classement - Start"]]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="593213ad-d40a-4d4a-8642-2e3e3071e152" name="mule-common-logger-subflow" />
+		<http:request method="GET" doc:name="Get Tree from Docubase" doc:id="de59fd92-354c-461a-8ec2-0f49339ba45d" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.path.baseURI}' ++ '${config.docubase.endpoint.getTree}']" responseTimeout="999999999">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+"client_secret" : 111,
+"client_id" : 111
+}]]]></http:headers>
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	value : attributes.queryParams.value,
+	'type' : attributes.queryParams.'type'
+}]]]></http:query-params>
+		</http:request>
+		<ee:transform doc:name="Set Log Configuration" doc:id="0a74ebe7-72a4-4c48-9c94-58a9bfa05d55" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="logMessage" ><![CDATA[%dw 2.0
+output application/java
+---
+"Process Docubase Request - Plan de Classement - Finish"]]></ee:set-variable>
+				<ee:set-variable variableName="logCategory" ><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel" ><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow" doc:id="d4b9a0b4-ddf9-4bab-897e-e1d3a6c32aa5" name="mule-common-logger-subflow" />
+	</flow>
+</mule>
