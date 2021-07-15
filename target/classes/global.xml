@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="a1a0faa9-2b24-4caf-a519-d5198f97752b" file="environment/${mule.env}.yaml" />
+	<global-property doc:name="Global Property" doc:id="cb59defa-5026-44e9-98f0-71f6b6adf835" name="mule.env" value="devLocal" />
+	<import doc:name="Import" doc:id="1e8c16e3-01bd-4fef-8532-be191a188b3e" file="common/audit/audit.xml" />
+	<import doc:name="Import" doc:id="472c7718-8d07-472a-b113-53652ba79e6e" file="common/audit/commons.xml" />
+	<import doc:name="Import" doc:id="002bbcad-2c88-4eec-83a2-ea0b8282cbb6" file="common/error/error-handling.xml" />
+	<import doc:name="Import" doc:id="00b05a68-74cd-453a-a3e1-26fe7d37b162" file="common/error/global-api-error.xml" />
+	<import doc:name="Import" doc:id="0a1fca0f-93d7-4dd6-9a7b-edecad647285" file="common/error/global-error.xml" />
+	<configuration-properties doc:name="Configuration properties" doc:id="e03a35af-b32d-4b56-afd2-952b25f4a6fd" file="environment\default-prop.yaml"/>
+	<configuration-properties doc:name="Configuration properties" doc:id="8bff2d44-5c67-4616-95d6-9aa01a6cb2e6" file="secure/${mule.securefile}.yaml" />
+	<global-property doc:name="Global Property" doc:id="030fbf64-4809-4d2b-a5b1-5a1358eb0aa6" name="mule.securefile" value="dev-secure" />
+	<secure-properties:config name="p-gr-sync-docubase-sf-case-impl-encryption" doc:name="Secure Properties Config" doc:id="a52aec6b-92c9-4e77-ac7a-ad7a63c8fd90" file="secure/${mule.securefile}.yaml" key="encPassword">
+		<secure-properties:encrypt algorithm="Blowfish" mode="ECB" />
+	</secure-properties:config>
+	<apikit:config outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" doc:name="Router" doc:id="d65321cb-52b0-44e3-bfea-04ad0ea9c2d5" name="p-gr-sync-case-config" api="p-gr-sync-case.raml" disableValidations="true"/>
+	<http:request-config name="http-request-s-gr-docubase" doc:name="HTTP Request configuration" doc:id="cc507271-ebba-49a7-afd4-f35c2c224c5e" basePath="/${config.docubase.path.baseURI}">
+		<http:request-connection protocol="${config.docubase.protocol}" host="${config.docubase.host}" port="${config.docubase.port}" connectionIdleTimeout="${http.timeout}" />
+	</http:request-config>
+	<configuration doc:name="Configuration" doc:id="28217dea-948f-4322-b15b-c6b89e4bb45c" defaultErrorHandler-ref="api-global-error-handler" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="ec0ddce9-f602-45be-8c8b-13658126aad0" >
+		<file:connection workingDir="C:\Users\nancy.kalach\Desktop\Tessi" />
+	</file:config>
+	<http:request-config name="http-request-s-gr-sfdc" doc:name="HTTP Request configuration" doc:id="89c8719a-97c8-457d-98eb-f8454bfcaf29" basePath="${config.salesforce.path.baseURI}">
+		<http:request-connection protocol="${config.salesforce.protocol}" host="${config.salesforce.host}" port="${config.salesforce.port}" connectionIdleTimeout="${http.timeout}" />
+	</http:request-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="b6f170d7-41ae-40ce-a967-a01dbf7a190b" >
+		<salesforce:basic-connection username="${config.salesforce.username}" password="${config.salesforce.password}" securityToken="${config.salesforce.securityToken}" url="${config.salesforce.authorizationURL}" />
+	</salesforce:sfdc-config>
+	<http:listener-config
+		name="http-listener-config-process">
+		<http:listener-connection host="0.0.0.0"
+			port="${http.port}" connectionIdleTimeout="${http.timeout}" />
+	</http:listener-config>
+</mule>
