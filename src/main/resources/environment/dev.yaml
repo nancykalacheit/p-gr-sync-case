@@ -1,0 +1,59 @@
+# Environment specific properties
+environment:
+ name: "dev"
+  
+api:
+  name: "${application.name}-${environment.name}"
+  id: "329996"
+  version: "v1"
+
+http:
+  timeout: "900000000"
+  listener:
+    path: "/api/${api.name}/${api.version}/*"
+
+https:
+  listener:
+    path: "/api/${api.name}/${api.version}/*"
+
+config:
+  protocol: "HTTP"
+  timeout: "999999999"
+  host: "s-gr-docubase.de-c1.eu1.cloudhub.io"
+  port: ""
+  docubase:
+    path:
+      baseURI: "api/s-gr-docubase-dev/v1"
+    endpoint: 
+      getDocument: "/searchDocument"
+      getTag: "/tag"
+      getTree: "/getTree"
+      readFile: "/file"
+      
+  salesforce:
+     authorizationURL: "https://test.salesforce.com/services/Soap/u/50.0"
+     username: "mulesoft.api@garance.fr.lot1real"
+     password: "garance@123"
+     securityToken: "tKO7vwAyJhyB2QRzU4VOmaQKy"
+     path:
+       baseURI: "api/s-gr-sfdc-dev/v1"
+     endpoint:
+       upsertRecords: "/upsertRecords"
+       getRecord: "/getRecord"
+     objectCase: "Case"
+     uniqueFieldCase: "IDGED__c"
+     objectTask: "Task"
+     uniqueFieldTask: "IdGed__c"
+     queryDemandeInfo: "Select Id, Account.NAdherent__c, Contrat__r.NContrat__c, DomainedActivite__c , Origin, IDPLI__c, TypologieDeDocument__c, ReferenceEncaissement__c, MontantEncaissement__c, Reason, SousMotif__c, Status From Case where id ="
+
+# Common properties
+common:
+  audit:
+    role:
+      logStart: "true"
+      logEnd: "true"
+      logInfo: "true"
+      logWarning: "true"
+      logError: "true"
+      logDebug: "true"
+    defaultLogPayloadLogic: "ALWAYS"

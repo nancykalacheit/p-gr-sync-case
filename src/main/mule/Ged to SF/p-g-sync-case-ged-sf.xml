@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+	<flow name="get:\syncCaseTaskGedSf:p-gr-sync-case-config"
+		doc:id="aa9e729a-7d9d-4481-afe2-709316b1e83c">
+		<ee:transform doc:name="Set Log Configuration"
+			doc:id="7e1ad7c4-defe-42d3-8c3f-21c27e0d612f">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/java
+---
+'Process cases from Docubase to Salesforce - Start']]></ee:set-variable>
+				<ee:set-variable variableName="logCategory"><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel"><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow"
+			doc:id="c8177b63-285e-47ce-96d8-485ce8728f79"
+			name="mule-common-logger-subflow" />
+		<salesforce:query doc:name="Query Case RecordType"
+			doc:id="06eff1f7-0531-42c7-863e-f906853c4033"
+			config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[SELECT Id, Name from recordtype where SobjectType = 'Case']]></salesforce:salesforce-query>
+		</salesforce:query>
+		<ee:transform doc:name="RecordType Id"
+			doc:id="e5286d54-60ea-4fe3-a342-a9ea01f8111b">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="IdReclamation"><![CDATA[%dw 2.0
+output application/json
+---
+(payload filter (value, index) -> ((value.Name == 'Réclamation'))).Id]]></ee:set-variable>
+				<ee:set-variable variableName="IdDemande"><![CDATA[%dw 2.0
+output application/json
+---
+(payload filter (value, index) -> ((value.Name == 'Demande'))).Id]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Read File from Docubase" doc:id="200e021a-e963-4af1-9028-9fce0b78f411" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.path.baseURI}' ++ '${config.docubase.endpoint.readFile}']" responseTimeout="999999999">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	client_secret : 111,
+	client_id : 111
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="To JSON"
+			doc:id="da78f2ee-01b5-41ea-bed5-132c0aa465f3">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Variables"
+			doc:id="060a11ee-b51c-4a13-9bc5-ac6ad74122fa">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="listCasesToInsert"><![CDATA[%dw 2.0
+output application/json
+---
+payload filter (value, index) -> ((value.TypeFlux == 'E'))]]></ee:set-variable>
+				<ee:set-variable variableName="listTasksToInsert"><![CDATA[%dw 2.0
+output application/json
+---
+payload filter (value, index) -> ((value.TypeFlux == 'S'))]]></ee:set-variable>
+				<ee:set-variable variableName="uniqueFieldCase"><![CDATA[%dw 2.0
+output application/json
+---
+'${config.salesforce.uniqueFieldCase}']]></ee:set-variable>
+				<ee:set-variable variableName="uniqueFieldTask"><![CDATA[%dw 2.0
+output application/json
+---
+'${config.salesforce.uniqueFieldTask}']]></ee:set-variable>
+				<ee:set-variable variableName="objectCase"><![CDATA[%dw 2.0
+output application/json
+---
+'${config.salesforce.objectCase}']]></ee:set-variable>
+				<ee:set-variable variableName="objectTask"><![CDATA[%dw 2.0
+output application/json
+---
+'${config.salesforce.objectTask}']]></ee:set-variable>
+				<ee:set-variable variableName="responseMessages"><![CDATA[%dw 2.0
+output application/json
+---
+[]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice"
+			doc:id="84db0236-f615-4b43-8b61-1eb88ea87aed">
+			<when expression="#[!isEmpty(vars.listCasesToInsert)]">
+				<ee:transform doc:name="Docubase To SF"
+					doc:id="4e33e6ab-876d-412a-b6a7-88f0c83e7510">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+---
+vars.listCasesToInsert map (item, index) -> {
+"IDGED__c": item.GEDID as Number,
+("Account": {NAdherent__c: item.'NUM ADHERENT'}) if(!isEmpty(item.'NUM ADHERENT')),
+("Contrat__r": {"type": "Contract", NContrat__c: item.'NUM CONTRAT'}) if(!isEmpty(item.'NUM CONTRAT')),
+"NumeroDuDocument__c": item.'NUM DOCUMENT',
+"DomainedActivite__c": item.'FAMILLE ACTE DE GESTION',
+"RecordtypeId" : if(item.'FAMILLE ACTE DE GESTION' == "Réclamation")(vars.IdReclamation)else(vars.IdDemande),
+"MontantEncaissement__c ": item.'MONTANT CHEQUE',
+"Origin": if(item.'CANAL ENTREE' =="P")("Courrier")else if(item.'CANAL ENTREE' =="M")("Email")else if(item.'CANAL ENTREE' =="E")("Web") else (""), // à verifier FAX
+"Reason": item.'ACTE DE GESTION',
+"SousMotif__c": item.'TEST' default "",
+"TypologieDeDocument__c": item.'TYPOLOGIE DE DOCUMENT',
+"ReferenceEncaissement__c": item.'CMC7' default ""
+//"Status" : item.status
+} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request method="POST" doc:name="Request to SF"
+					doc:id="c978909f-ca35-40e2-bd6f-d9af39d4d935"
+					config-ref="http-request-s-gr-sfdc"
+					path="#['${config.salesforce.path.baseURI}' ++ '${config.salesforce.endpoint.upsertRecords}']"
+					responseTimeout="999999999">
+					<http:headers><![CDATA[#[output application/java
+---
+{
+client_secret : 111,
+client_id : 111
+}]]]></http:headers>
+					<http:query-params><![CDATA[#[output application/json
+---
+{
+objectSfdc : vars.objectCase,
+externalIdField: vars.uniqueFieldCase
+}]]]></http:query-params>
+				</http:request>
+				<ee:transform doc:name="Combine Results"
+					doc:id="22e9d670-745f-4dba-9062-057a1b31db81">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="responseMessages"><![CDATA[%dw 2.0
+output application/json
+---
+vars.responseMessages ++ payload]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="b710174f-a91b-433a-943c-a9dd2204feff" />
+			</otherwise>
+		</choice>
+		<choice doc:name="Choice"
+			doc:id="2e3e087f-686a-44e1-afe4-b5ad1690b024">
+			<when expression="#[!isEmpty(vars.listTasksToInsert)]">
+				<ee:transform doc:name="Docubase to SF"
+					doc:id="9325f866-6988-4d1b-aefc-d16185f73fbd">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+vars.listTasksToInsert map (item, index) -> {
+	"DateDeNumerisation__c" : item.'DATE DE NUMERISATION' as Date {format:"yyyyMMdd"} as Date {format: "yyyy-MM-dd"},
+	//"What": {
+	// "type":"Account",
+	 //"NAdherent__c": item.'NUM ADHERENT'
+	// },
+	"zzz_NAdherent__c": item.'NUM ADHERENT',
+	"NumeroDuDocument__c": item.'NUM DOCUMENT',
+	"Montant__c ": item.'MONTANT CHEQUE',
+	"TypologieDeDocument__c": item.'TYPOLOGIE DE DOCUMENT',
+	"IdGed__c": item.'GEDID' as Number
+	//"Status" : item.status
+	} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request method="POST" doc:name="Request to SF"
+					doc:id="20d8974b-c886-4788-9740-41080c498f7f"
+					config-ref="http-request-s-gr-sfdc"
+					path="#['${config.salesforce.path.baseURI}' ++ '${config.salesforce.endpoint.upsertRecords}']"
+					responseTimeout="999999999">
+					<http:headers><![CDATA[#[output application/java
+---
+{
+client_secret : 111,
+client_id : 111
+}]]]></http:headers>
+					<http:query-params><![CDATA[#[output application/json
+---
+{
+objectSfdc : vars.objectTask,
+externalIdField: vars.uniqueFieldTask
+}]]]></http:query-params>
+				</http:request>
+				<ee:transform doc:name="Combine Results"
+					doc:id="17ad25a5-2843-4f21-aa4b-2d613a2b676d">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="responseMessages"><![CDATA[%dw 2.0
+output application/json
+---
+vars.responseMessages ++ payload]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger"
+					doc:id="e928e017-5750-4872-8f29-1de8626dfef4" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Final Payload"
+			doc:id="23f8cffb-9639-408d-a63b-47c4b1b91076">
+			<ee:message>
+				<ee:set-payload><![CDATA[vars.responseMessages]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Set Log Configuration"
+			doc:id="78f11275-1c76-4b02-b54c-15aa80046529">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="logMessage"><![CDATA[%dw 2.0
+output application/java
+---
+'Process cases from Docubase to Salesforce - Finish']]></ee:set-variable>
+				<ee:set-variable variableName="logCategory"><![CDATA[%dw 2.0
+output application/java
+---
+'Trace']]></ee:set-variable>
+				<ee:set-variable variableName="logLevel"><![CDATA[%dw 2.0
+output application/java
+---
+'INFO']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="mule-common-logger-subflow"
+			doc:id="120413d2-be81-4b34-b00e-5609581633d4"
+			name="mule-common-logger-subflow" />
+	</flow>
+</mule>
