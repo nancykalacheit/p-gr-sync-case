@@ -9,7 +9,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 	<configuration-properties doc:name="Configuration properties" doc:id="a1a0faa9-2b24-4caf-a519-d5198f97752b" file="environment/${mule.env}.yaml" />
-	<global-property doc:name="Global Property" doc:id="cb59defa-5026-44e9-98f0-71f6b6adf835" name="mule.env" value="dev" />
+	<global-property doc:name="Global Property" doc:id="cb59defa-5026-44e9-98f0-71f6b6adf835" name="mule.env" value="devLocal" />
 	<import doc:name="Import" doc:id="1e8c16e3-01bd-4fef-8532-be191a188b3e" file="common/audit/audit.xml" />
 	<import doc:name="Import" doc:id="472c7718-8d07-472a-b113-53652ba79e6e" file="common/audit/commons.xml" />
 	<import doc:name="Import" doc:id="002bbcad-2c88-4eec-83a2-ea0b8282cbb6" file="common/error/error-handling.xml" />

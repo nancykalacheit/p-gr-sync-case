@@ -33,7 +33,7 @@ output application/java
 			</ee:variables>
 		</ee:transform>
 		<flow-ref doc:name="mule-common-logger-subflow" doc:id="593213ad-d40a-4d4a-8642-2e3e3071e152" name="mule-common-logger-subflow" />
-		<http:request method="GET" doc:name="Get Tree from Docubase" doc:id="de59fd92-354c-461a-8ec2-0f49339ba45d" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.path.baseURI}' ++ '${config.docubase.endpoint.getTree}']" responseTimeout="999999999">
+		<http:request method="GET" doc:name="Get Tree from Docubase" doc:id="de59fd92-354c-461a-8ec2-0f49339ba45d" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.endpoint.getTree}']" responseTimeout="999999999">
 			<http:headers ><![CDATA[#[output application/java
 ---
 {
@@ -43,8 +43,8 @@ output application/java
 			<http:query-params ><![CDATA[#[output application/java
 ---
 {
-	value : attributes.queryParams.value,
-	'type' : attributes.queryParams.'type'
+	category : attributes.queryParams.category,
+	value : attributes.queryParams.value
 }]]]></http:query-params>
 		</http:request>
 		<ee:transform doc:name="Set Log Configuration" doc:id="0a74ebe7-72a4-4c48-9c94-58a9bfa05d55" >
