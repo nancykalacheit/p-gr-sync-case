@@ -40,4 +40,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		<http:listener-connection host="0.0.0.0"
 			port="${http.port}" connectionIdleTimeout="${http.timeout}" />
 	</http:listener-config>
+	<global-property doc:name="Global Property" doc:id="389235e3-1773-4f52-b439-768f1ab1556c" name="recordType.Case.Reclamation" value="0121q0000000qz9AAA" />
+	<global-property doc:name="Global Property" doc:id="d3708d02-04fc-408b-af0d-06bc892b802f" name="recordType.case.Demande" value="0121q0000000nDhAAI" />
 </mule>
