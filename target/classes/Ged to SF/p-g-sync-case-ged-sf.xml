@@ -37,26 +37,7 @@ output application/java
 		<flow-ref doc:name="mule-common-logger-subflow"
 			doc:id="c8177b63-285e-47ce-96d8-485ce8728f79"
 			name="mule-common-logger-subflow" />
-		<salesforce:query doc:name="Query Case RecordType"
-			doc:id="06eff1f7-0531-42c7-863e-f906853c4033"
-			config-ref="Salesforce_Config">
-			<salesforce:salesforce-query><![CDATA[SELECT Id, Name from recordtype where SobjectType = 'Case']]></salesforce:salesforce-query>
-		</salesforce:query>
-		<ee:transform doc:name="RecordType Id"
-			doc:id="e5286d54-60ea-4fe3-a342-a9ea01f8111b">
-			<ee:message />
-			<ee:variables>
-				<ee:set-variable variableName="IdReclamation"><![CDATA[%dw 2.0
-output application/json
----
-(payload filter (value, index) -> ((value.Name == 'Réclamation'))).Id]]></ee:set-variable>
-				<ee:set-variable variableName="IdDemande"><![CDATA[%dw 2.0
-output application/json
----
-(payload filter (value, index) -> ((value.Name == 'Demande'))).Id]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<http:request method="GET" doc:name="Read File from Docubase" doc:id="200e021a-e963-4af1-9028-9fce0b78f411" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.path.baseURI}' ++ '${config.docubase.endpoint.readFile}']" responseTimeout="999999999">
+		<http:request method="GET" doc:name="Read SFTP from Docubase" doc:id="200e021a-e963-4af1-9028-9fce0b78f411" config-ref="http-request-s-gr-docubase" path="#['${config.docubase.path.baseURI}' ++ '${config.docubase.endpoint.readFile}']" responseTimeout="999999999">
 			<http:headers ><![CDATA[#[output application/java
 ---
 {
@@ -121,7 +102,7 @@ vars.listCasesToInsert map (item, index) -> {
 ("Contrat__r": {"type": "Contract", NContrat__c: item.'NUM CONTRAT'}) if(!isEmpty(item.'NUM CONTRAT')),
 "NumeroDuDocument__c": item.'NUM DOCUMENT',
 "DomainedActivite__c": item.'FAMILLE ACTE DE GESTION',
-"RecordtypeId" : if(item.'FAMILLE ACTE DE GESTION' == "Réclamation")(vars.IdReclamation)else(vars.IdDemande),
+"RecordtypeId" : if(item.'FAMILLE ACTE DE GESTION' == "Réclamation")(p('recordType.Case.Reclamation'))else('recordType.case.Demande'),
 "MontantEncaissement__c ": item.'MONTANT CHEQUE',
 "Origin": if(item.'CANAL ENTREE' =="P")("Courrier")else if(item.'CANAL ENTREE' =="M")("Email")else if(item.'CANAL ENTREE' =="E")("Web") else (""), // à verifier FAX
 "Reason": item.'ACTE DE GESTION',

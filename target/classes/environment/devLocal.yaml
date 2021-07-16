@@ -15,8 +15,7 @@ http:
 
 https:
   listener:
-    path: "/api/${api.name}/${api.version}/*"
-    
+    path: "/api/${api.name}/${api.version}/*"   
 
 config:
   docubase:
